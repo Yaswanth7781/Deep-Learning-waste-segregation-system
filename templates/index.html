@@ -1,26 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Waste Segregator</title>
+    <title>Waste Segregator AI</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-    <div class="container">
-        <h1>♻️ Waste Segregator AI</h1>
+<div class="container">
+    <h1>♻️ Waste Segregator AI</h1>
 
-        <form action="/predict" method="post" enctype="multipart/form-data">
-            <input type="file" name="file" required>
-            <button type="submit">Predict</button>
-        </form>
+    <!-- Upload Box -->
+    <form action="/predict" method="post" enctype="multipart/form-data" id="uploadForm">
+        
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <p>📂 Drag & Drop or Click to Upload</p>
+            <input type="file" name="file" id="fileInput" hidden onchange="previewImage(event)">
+        </div>
 
-        {% if prediction %}
-            <div class="result">
-                <h2>Prediction: {{ prediction }}</h2>
-                <p>Confidence: {{ confidence }}%</p>
-            </div>
-        {% endif %}
-    </div>
+        <!-- Image Preview -->
+        <img id="preview" class="preview-img" />
+
+        <button type="submit">🔍 Predict</button>
+    </form>
+
+    <!-- Loader -->
+    <div id="loader" class="loader hidden"></div>
+
+    <!-- Result -->
+    {% if prediction %}
+        <div class="result {{ prediction }}">
+            <h2>{{ prediction }}</h2>
+            <p>Confidence: {{ confidence }}%</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function previewImage(event) {
+    const preview = document.getElementById("preview");
+    preview.src = URL.createObjectURL(event.target.files[0]);
+    preview.style.display = "block";
+}
+
+// Show loader on submit
+document.getElementById("uploadForm").addEventListener("submit", function() {
+    document.getElementById("loader").classList.remove("hidden");
+});
+</script>
 
 </body>
 </html>
