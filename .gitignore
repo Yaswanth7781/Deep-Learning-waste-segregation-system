@@ -1,0 +1,29 @@
+# Virtual environments
+env/
+venv/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# User uploaded files
+uploads/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# MacOS
+.DS_Store
+
+# Large Model Weights
+*.h5
+*.hdf5
+*.weights
+*.caffemodel
+*.pb

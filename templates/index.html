@@ -1,52 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Waste Segregator AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Waste Segregation Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<div class="container">
-    <h1>♻️ Waste Segregator AI</h1>
+<div class="dashboard-container">
+    <header>
+        <h1>♻️ Live Waste Segregation Dashboard</h1>
+        <p>Real-time AI analysis of waste categories</p>
+    </header>
 
-    <!-- Upload Box -->
-    <form action="/predict" method="post" enctype="multipart/form-data" id="uploadForm">
+    <div class="tabs">
+        <a href="/" class="tab {% if mode == 'live' %}active{% endif %}">Live Camera</a>
+        <a href="#" class="tab {% if mode == 'upload' %}active{% endif %}" onclick="document.getElementById('upload-tab').style.display='flex'; document.getElementById('live-tab').style.display='none'; this.classList.add('active'); this.previousElementSibling.classList.remove('active'); return false;">Upload Media</a>
+    </div>
+
+    <main class="dashboard-main">
         
-        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-            <p>📂 Drag & Drop or Click to Upload</p>
-            <input type="file" name="file" id="fileInput" hidden onchange="previewImage(event)">
-        </div>
+        <!-- Live Video Feed Section -->
+        <section class="video-section" id="live-tab" style="display: {% if mode == 'live' %}flex{% else %}none{% endif %};">
+            <div class="video-wrapper">
+                <img id="video-stream" src="" alt="Live Camera Feed">
+                <button id="start-camera-btn" onclick="document.getElementById('video-stream').src='/video_feed'; this.style.display='none';" class="upload-btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;">Start Live Camera</button>
+                <div class="status-badge live-status">
+                    <span class="dot"></span> LIVE
+                </div>
+            </div>
+            <p class="instruction">Point camera at waste for automatic classification.</p>
+        </section>
 
-        <!-- Image Preview -->
-        <img id="preview" class="preview-img" />
+        <!-- Upload Media Section -->
+        <section class="video-section" id="upload-tab" style="display: {% if mode == 'upload' %}flex{% else %}none{% endif %};">
+            <div class="upload-container">
+                <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+                    <input type="file" name="file" accept="image/*,video/*" required class="file-input">
+                    <button type="submit" class="upload-btn">Upload & Analyze</button>
+                </form>
+            </div>
+            
+            {% if error %}
+            <p class="error-msg">{{ error }}</p>
+            {% endif %}
 
-        <button type="submit">🔍 Predict</button>
-    </form>
+            {% if media_type %}
+            <div class="video-wrapper">
+                {% if media_type == 'image' %}
+                    <img id="uploaded-image" src="data:image/jpeg;base64,{{ image_data }}" alt="Uploaded Media">
+                {% elif media_type == 'video' %}
+                    <img id="uploaded-video" src="/uploaded_video_feed/{{ video_filename }}" alt="Uploaded Video Feed">
+                {% endif %}
+            </div>
+            {% endif %}
+        </section>
 
-    <!-- Loader -->
-    <div id="loader" class="loader hidden"></div>
-
-    <!-- Result -->
-    {% if prediction %}
-        <div class="result {{ prediction }}">
-            <h2>{{ prediction }}</h2>
-            <p>Confidence: {{ confidence }}%</p>
-        </div>
-    {% endif %}
+        <!-- Sidebar / Info Panel -->
+        <aside class="info-panel">
+            <h2>Categories</h2>
+            <ul class="legend">
+                <li class="{% if prediction == 'organic' %}active-category{% endif %}">
+                    <div class="category-header">
+                        <span class="legend-color" style="background-color: #00FF00;"></span> Organic
+                    </div>
+                    {% if prediction == 'organic' %}
+                        <span class="detection-badge">Detected ({{ confidence }}%)</span>
+                    {% endif %}
+                    {% if history and history['organic'] %}
+                    <ul class="history-list">
+                        {% for item in history['organic'] %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+                <li class="{% if prediction == 'recyclable' %}active-category{% endif %}">
+                    <div class="category-header">
+                        <span class="legend-color" style="background-color: #00FFFF;"></span> Recyclable
+                    </div>
+                    {% if prediction == 'recyclable' %}
+                        <span class="detection-badge">Detected ({{ confidence }}%)</span>
+                    {% endif %}
+                    {% if history and history['recyclable'] %}
+                    <ul class="history-list">
+                        {% for item in history['recyclable'] %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+                <li class="{% if prediction == 'non_recyclable' %}active-category{% endif %}">
+                    <div class="category-header">
+                        <span class="legend-color" style="background-color: #FFA500;"></span> Non-Recyclable
+                    </div>
+                    {% if prediction == 'non_recyclable' %}
+                        <span class="detection-badge">Detected ({{ confidence }}%)</span>
+                    {% endif %}
+                    {% if history and history['non_recyclable'] %}
+                    <ul class="history-list">
+                        {% for item in history['non_recyclable'] %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+                <li class="{% if prediction == 'hazardous' %}active-category{% endif %}">
+                    <div class="category-header">
+                        <span class="legend-color" style="background-color: #FF0000;"></span> Hazardous
+                    </div>
+                    {% if prediction == 'hazardous' %}
+                        <span class="detection-badge">Detected ({{ confidence }}%)</span>
+                    {% endif %}
+                    {% if history and history['hazardous'] %}
+                    <ul class="history-list">
+                        {% for item in history['hazardous'] %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+            </ul>
+        </aside>
+    </main>
 </div>
-
-<script>
-function previewImage(event) {
-    const preview = document.getElementById("preview");
-    preview.src = URL.createObjectURL(event.target.files[0]);
-    preview.style.display = "block";
-}
-
-// Show loader on submit
-document.getElementById("uploadForm").addEventListener("submit", function() {
-    document.getElementById("loader").classList.remove("hidden");
-});
-</script>
 
 </body>
 </html>
